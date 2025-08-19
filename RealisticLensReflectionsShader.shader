@@ -1,3 +1,6 @@
+// author : Koczalski
+// 2025-08-18
+// Unity Built-in RP ShaderLab
 Shader "KOCZALSKI/RealisticLensReflections"
 {
     Properties
