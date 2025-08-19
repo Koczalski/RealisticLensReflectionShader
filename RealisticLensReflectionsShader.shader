@@ -9,7 +9,6 @@ Shader "KOCZALSKI/RealisticLensReflections"
         _InsideIOR         ("Inside  IOR (n2)", Float) = 1.5
         _ScreenOffsetScale ("Screen Offset Scale", Range(0,1)) = 0.18
 
-        // --- Debug / Control ---
         [Toggle(_BYPASS_STENCIL)] _BypassStencil ("Bypass Stencil (debug)", Float) = 0
         _ForceOffsetXY      ("Force Offset XY (debug)", Vector) = (0,0,0,0)
         _ForceOffsetScale   ("Force Offset Scale (debug)", Range(0,1)) = 0.0
@@ -27,16 +26,13 @@ Shader "KOCZALSKI/RealisticLensReflections"
 
     SubShader
     {
-        // できるだけ遅く描いて他の透明より前面に
         Tags { "Queue"="Transparent+30" "RenderType"="Transparent" "IgnoreProjector"="True" }
         Cull Back
         ZWrite Off
         Blend SrcAlpha OneMinusSrcAlpha
 
-        // 背景キャプチャ（Built-in RP）
         GrabPass { "_GrabTexture" }
 
-        // -------- Pass A: 通常（Stencil有効） --------
         Pass
         {
             Stencil { Ref [_StencilRef] Comp NotEqual Pass Keep }
@@ -88,39 +84,32 @@ Shader "KOCZALSKI/RealisticLensReflections"
 
             fixed4 DoRefract(v2f i)
             {
-                // 法線・視線
                 float3 N = normalize(i.wnor);
                 float3 V = normalize(_WorldSpaceCameraPos - i.wpos);
 
-                // 内外判定（両面対応）
                 float n1=_OutsideIOR, n2=_InsideIOR;
                 float3 Nf=N; float VN = dot(V,Nf);
                 if (VN < 0){ Nf = -Nf; VN = -VN; n1=_InsideIOR; n2=_OutsideIOR; }
 
-                // スネル（屈折）/ 全反射フォールバック
                 float3 I = -V;
                 float  eta = n1/n2;
                 float3 T = refract(I, Nf, eta);
                 if (all(T == 0)) T = reflect(I, Nf);
                 T = normalize(T);
 
-                // View空間オフセット
                 float3 Tv = mul((float3x3)UNITY_MATRIX_V, T);
                 float z   = max(0.001, abs(Tv.z));
                 float2 offset = (Tv.xy / z) * _ScreenOffsetScale;
 
-                // 強制オフセット（デバッグ）
                 offset += _ForceOffsetXY.xy * _ForceOffsetScale;
 
-                // Debug: 1=ベクトル可視化 / 2=Grabのみ
                 if (_DebugMode >= 1.0){
                     if (_DebugMode < 1.5){
-                        float2 o = offset * 8.0; // 視認性アップ
+                        float2 o = offset * 8.0;
                         return fixed4(0.5 + o.x, 0.5 + o.y, 0.5, 1);
                     }
                 }
 
-                // 屈折サンプル
                 float4 suv = i.sp; suv.xy += offset * i.sp.w;
                 fixed4 refrCol = tex2Dproj(_GrabTexture, UNITY_PROJ_COORD(suv));
 
@@ -129,7 +118,6 @@ Shader "KOCZALSKI/RealisticLensReflections"
                     return refrCol;
                 }
 
-                // Fresnel反射（簡易：Grabを反射方向オフセットで代用）
                 float3 Rw = reflect(-V, Nf);
                 float3 Rv = mul((float3x3)UNITY_MATRIX_V, Rw);
                 float rz  = max(0.001, abs(Rv.z));
@@ -137,7 +125,6 @@ Shader "KOCZALSKI/RealisticLensReflections"
                 float4 rsuv = i.sp; rsuv.xy += roffset * i.sp.w;
                 fixed4 reflCol = tex2Dproj(_GrabTexture, UNITY_PROJ_COORD(rsuv)) * _ReflectTint;
 
-                // Schlick
                 float F = FresnelSchlick(saturate(VN), n1, n2) * _FresnelScale;
 
                 fixed4 col = lerp(refrCol, reflCol, saturate(F));
@@ -153,7 +140,6 @@ Shader "KOCZALSKI/RealisticLensReflections"
             ENDCG
         }
 
-        // -------- Pass B: Stencil無視版（_BYPASS_STENCILがONのときだけ有効） --------
         Pass
         {
             CGPROGRAM
@@ -190,10 +176,8 @@ Shader "KOCZALSKI/RealisticLensReflections"
             fixed4 frag(v2f i):SV_Target
             {
             #ifndef _BYPASS_STENCIL
-                // バイパス無効時は何も描かず透明を返す（全経路return）
                 return fixed4(0,0,0,0);
             #else
-                // --- Stencilを完全無視して屈折を強制表示（デバッグ用） ---
                 float3 N = normalize(i.wnor);
                 float3 V = normalize(_WorldSpaceCameraPos - i.wpos);
                 float n1=_OutsideIOR, n2=_InsideIOR; float3 Nf=N; float VN=dot(V,Nf);
