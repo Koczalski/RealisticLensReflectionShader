@@ -14,7 +14,6 @@ Shader "KOCZALSKI/RealisticLensReflections"
         _ForceOffsetScale   ("Force Offset Scale (debug)", Range(0,1)) = 0.0
         _DebugMode          ("Debug Mode (0:Normal 1:OffsetVec 2:GrabOnly)", Range(0,2)) = 0
 
-        // Fresnel (軽め)
         _FresnelScale      ("Fresnel Scale", Range(0,1)) = 0.7
         _ReflectTint       ("Reflect Tint", Color) = (1,1,1,1)
 
