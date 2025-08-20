@@ -5,8 +5,10 @@
 Unity Built-in Render Pipeline 用の **GrabPass 屈折シェーダー**です。
 メガネのレンズや透明オブジェクトの屈折を表現できます。さらに **ステンシルマスク**によって「屈折させない部分（フレームなど）」を除外できます。
 
+本リポジトリには、以下が含まれます：
 
-RealisticLensShader.shader以外のシェーダーは今後追加予定です。まだ検証中です。
+* **NoRefractMask.shader** : 除外オブジェクト用（ステンシル刻印のみ）
+* **Refract\_Debug\_Stencil.shader** : 屈折シェーダー（デバッグ機能付き）
 
 ## 特徴
 
@@ -56,4 +58,4 @@ RealisticLensShader.shader以外のシェーダーは今後追加予定です。
 
 ## ライセンス
 
-Apache License 2.0
+MIT License
