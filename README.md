@@ -58,4 +58,4 @@ Unity Built-in Render Pipeline 用の **GrabPass 屈折シェーダー**です�
 
 ## ライセンス
 
-MIT License
+Apache 2.0 license
